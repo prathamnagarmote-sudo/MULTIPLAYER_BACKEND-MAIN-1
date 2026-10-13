@@ -1,0 +1,56 @@
+name: nakama
+data_dir: "/nakama/data/"
+
+logger:
+  stdout: true
+  level: "info"
+  file: ""
+
+console:
+  port: 7351
+  username: "nakama_admin"
+  password: "change-me-console-password"
+  signing_key: "change-me-console-signing-key"
+  token_expiry_sec: 86400
+
+socket:
+  server_key: "change-me-socket-server-key"
+  port: 7350
+  max_message_size_bytes: 4096
+  read_buffer_size_bytes: 4096
+  write_buffer_size_bytes: 4096
+  ping_period_ms: 15000
+  pong_wait_ms: 25000
+  write_wait_ms: 10000
+  outgoing_queue_size: 64
+
+runtime:
+  path: "/nakama/data/modules"
+  http_key: "change-me-runtime-http-key"
+  js_entrypoint: "main.js"
+  js_read_only_globals: true
+  js_min_stack_size_kb: 256
+  js_max_stack_size_kb: 1024
+  js_call_stack_size: 128
+
+session:
+  encryption_key: "change-me-session-encryption-key"
+  token_expiry_sec: 7200
+  refresh_encryption_key: "change-me-session-refresh-encryption-key"
+  refresh_token_expiry_sec: 86400
+
+match:
+  input_queue_size: 128
+  call_queue_size: 128
+  join_attempt_queue_size: 128
+  join_marker_deadline_ms: 15000
+  max_empty_sec: 300
+  deferred_message_fn: ""
+
+tracker:
+  event_queue_size: 65536
+
+metrics:
+  reporting_freq_sec: 60
+  stackdriver_projectid: ""
+  prometheus_port: 0

@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+dist/
+build/
+*.log
+
+# Large binary builds (handled via Docker/Registry)
+Linux/
+*.x86_64
+*.unityweb
+*.so
+
+# Environment secrets
+.env
+*.pem
+.DS_Store

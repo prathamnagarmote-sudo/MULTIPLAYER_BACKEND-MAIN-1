@@ -1,0 +1,37 @@
+services:
+  game-servers-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: game-servers-service:latest
+    container_name: game-servers-service
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      GAME_SERVER_IMAGE: ${GAME_SERVER_IMAGE:-stacknize-server:latest}
+      GAME_SERVER_PORT_START: ${GAME_SERVER_PORT_START:-7900}
+      GAME_SERVER_PORT_END: ${GAME_SERVER_PORT_END:-8900}
+      GAME_SERVER_ROUTER_PORT: ${GAME_SERVER_ROUTER_PORT:-4000}
+      GAME_SERVER_MEMORY_LIMIT: ${GAME_SERVER_MEMORY_LIMIT:-400m}
+      GAME_SERVER_CPU_LIMIT: ${GAME_SERVER_CPU_LIMIT:-0.5}
+      GAME_SERVER_BOOT_TIMEOUT_SECONDS: ${GAME_SERVER_BOOT_TIMEOUT_SECONDS:-60}
+      GAME_SERVER_INTERNAL_PORT: ${GAME_SERVER_INTERNAL_PORT:-7778}
+      GAME_SERVER_DOCKER_NETWORK: ${GAME_SERVER_DOCKER_NETWORK:-stacknize-game-net}
+      GAME_SERVER_CLEANUP_INTERVAL_SECONDS: ${GAME_SERVER_CLEANUP_INTERVAL_SECONDS:-30}
+      GAME_SERVER_MAX_LIFETIME_MINUTES: ${GAME_SERVER_MAX_LIFETIME_MINUTES:-180}
+      INTERNAL_HOOK_SECRET: ${INTERNAL_HOOK_SECRET:-changeme}
+    ports:
+      - "${PORT:-3000}:3000"
+    networks:
+      - game-net
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  game-net:
+    external: true
+    name: ${GAME_SERVER_DOCKER_NETWORK:-stacknize-game-net}

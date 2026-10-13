@@ -1,0 +1,43 @@
+version: "3.9"
+
+name: nakama
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: nakama-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  nakama:
+    image: ${NAKAMA_IMAGE}
+    container_name: nakama
+    depends_on:
+      - postgres
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        cat > /nakama/data/runtime-env.yml <<EOF
+        runtime:
+          env:
+            - "NODE_ENV=production"
+            - "GAME_SERVERS_URL=${GAME_SERVERS_URL:?GAME_SERVERS_URL must be set}"
+            - "INTERNAL_HOOK_SECRET=${INTERNAL_HOOK_SECRET:?INTERNAL_HOOK_SECRET must be set}"
+        EOF
+        /nakama/nakama migrate up --database.address ${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB} &&
+        exec /nakama/nakama --config /nakama/data/local.yml --config /nakama/data/runtime-env.yml --name nakama1 --database.address postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+    volumes:
+      - ./local.yml:/nakama/data/local.yml:ro
+    ports:
+      - "7350:7350"
+      - "7351:7351"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
