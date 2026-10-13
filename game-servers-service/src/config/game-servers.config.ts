@@ -1,3 +1,7 @@
+
+
+
+
 import { registerAs } from '@nestjs/config';
 
 const toNumber = (value: string | undefined, fallback: number) => {
@@ -32,4 +36,14 @@ export default registerAs('gameServers', () => ({
     60,
   ),
   internalPort: toNumber(process.env.GAME_SERVER_INTERNAL_PORT, 7778),
+  gameImages: {
+    'Game_1_SnakeLadder': process.env.GAME_IMAGE_SNAKELADDER || '',
+    'Game_2_Carrom': process.env.GAME_IMAGE_CARROM || '',
+    'Game_3_BubbleShooter': process.env.GAME_IMAGE_BUBBLESHOOTER || '',
+    'Game_4_JellyBlast': process.env.GAME_IMAGE_JELLYBLAST || '',
+    'Game_5_Pool': process.env.GAME_IMAGE_POOL || '',
+    'Game_6_Ludo': process.env.GAME_IMAGE_LUDO || '',
+    'Game_7_Poker': process.env.GAME_IMAGE_POKER || '',
+    'Game_8_Rummy': process.env.GAME_IMAGE_RUMMY || '',
+  },
 }));

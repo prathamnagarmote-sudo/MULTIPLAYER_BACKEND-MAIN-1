@@ -37,6 +37,7 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
   private readonly activeMatches = new Map<string, ActiveGameServer>();
   private readonly routeAliases = new Map<string, string>();
   private readonly containerImage: string;
+  private readonly gameImages: Record<string, string>;
   private readonly memoryLimit: string;
   private readonly cpuLimit: string;
   private readonly bootTimeoutSeconds: number;
@@ -53,6 +54,10 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
     configService: ConfigService,
   ) {
     this.containerImage = configService.get<string>('gameServers.image', '');
+    this.gameImages = configService.get<Record<string, string>>(
+      'gameServers.gameImages',
+      {},
+    );
     this.memoryLimit = configService.get<string>(
       'gameServers.memoryLimit',
       '400m',
@@ -139,6 +144,11 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
           continue;
         }
 
+        const targetImage = this.resolveGameImage(gameType);
+        this.logger.debug(
+          `Resolved target Docker image '${targetImage}' for gameType '${gameType}' (match ${matchId})`,
+        );
+
         const { stdout } = await execFileAsync('docker', [
           'run',
           '-d',
@@ -166,7 +176,7 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
           `GAME_TYPE=${gameType}`,
           '-e',
           `INTERNAL_HOOK_SECRET=${this.internalHookSecret}`,
-          this.containerImage,
+          targetImage,
         ]);
 
         const containerId = stdout.trim();
@@ -562,6 +572,26 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
     return new ServiceUnavailableException(
       `${fallbackMessage}: ${this.getErrorMessage(error)}`,
     );
+  }
+
+  private resolveGameImage(gameType: string): string {
+    const normalizedKey = (gameType || '').trim();
+
+    // 1. Direct match in configured gameImages map
+    if (this.gameImages[normalizedKey] && this.gameImages[normalizedKey].trim()) {
+      return this.gameImages[normalizedKey].trim();
+    }
+
+    // 2. Case-insensitive lookup in configured gameImages map
+    const lowerKey = normalizedKey.toLowerCase();
+    for (const [key, value] of Object.entries(this.gameImages)) {
+      if (key.toLowerCase() === lowerKey && value && value.trim()) {
+        return value.trim();
+      }
+    }
+
+    // 3. Fallback to default monolithic container image
+    return this.containerImage;
   }
 
   private getErrorMessage(error: unknown): string {
