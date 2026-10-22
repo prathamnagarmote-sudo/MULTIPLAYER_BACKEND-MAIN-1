@@ -196,6 +196,7 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
         );
 
         await this.waitForContainerReady(
+          containerId,
           connectionTarget.targetHost,
           connectionTarget.targetPort,
         );
@@ -505,48 +506,53 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async waitForContainerReady(
+    containerId: string,
     targetHost: string,
     targetPort: number,
   ): Promise<void> {
-    const maxAttempts = Math.max(1, this.bootTimeoutSeconds);
+    const maxAttempts = Math.max(1, this.bootTimeoutSeconds) * 2; // Check every 500ms
     this.logger.debug(
-      `Starting readiness probe for ${targetHost}:${targetPort} with ${maxAttempts} second(s) timeout`,
+      `Starting readiness probe for ${targetHost}:${targetPort} (container ${containerId.slice(0, 12)}) with ${this.bootTimeoutSeconds}s timeout`,
     );
 
+    const portPattern = String(targetPort);
+
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      const ready = await new Promise<boolean>((resolve) => {
-        const socket = net.createConnection(targetPort, targetHost);
-        const finish = (isReady: boolean) => {
-          socket.destroy();
-          resolve(isReady);
-        };
+      try {
+        const { stdout } = await execFileAsync('docker', [
+          'logs',
+          '--tail',
+          '40',
+          containerId,
+        ]);
 
-        socket.setTimeout(1000);
-        socket.once('connect', () => finish(true));
-        socket.once('timeout', () => finish(false));
-        socket.once('error', () => finish(false));
-      });
-
-      if (ready) {
-        this.logger.log(
-          `Container ready on ${targetHost}:${targetPort} after ${attempt + 1} attempt(s)`,
-        );
-        return;
+        if (
+          stdout.includes(`listening on port ${portPattern}`) ||
+          stdout.includes(`SWT [${portPattern}]`) ||
+          stdout.includes('Dedicated Server Started')
+        ) {
+          // Give Mono 250ms to settle the listener thread cleanly
+          await this.delay(250);
+          this.logger.log(
+            `Container ready on ${targetHost}:${targetPort} (SWT listening confirmed via logs in ${(attempt + 1) * 0.5}s)`,
+          );
+          return;
+        }
+      } catch (error) {
+        // Container creation in progress
       }
 
-      if ((attempt + 1) % 5 === 0) {
+      if ((attempt + 1) % 10 === 0) {
         this.logger.warn(
-          `Container probe still waiting on ${targetHost}:${targetPort} (${attempt + 1}/${maxAttempts} seconds)`,
+          `Container probe still waiting on ${targetHost}:${targetPort} (${Math.round((attempt + 1) * 0.5)}/${this.bootTimeoutSeconds} seconds)`,
         );
       }
 
-      if (attempt + 1 < maxAttempts) {
-        await this.delay(1000);
-      }
+      await this.delay(500);
     }
 
     throw new ServiceUnavailableException(
-      `Game server container on ${targetHost}:${targetPort} did not become ready in time after ${maxAttempts}s`,
+      `Game server container on ${targetHost}:${targetPort} did not become ready in time after ${this.bootTimeoutSeconds}s`,
     );
   }
 
