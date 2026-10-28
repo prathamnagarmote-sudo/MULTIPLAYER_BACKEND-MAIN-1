@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.12.1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Independent Game Backend Architecture: Technical Handbook &amp; Implementation Guide</title>
+  <style>
+
+html {
+color: #1a1a1a;
+color: light-dark(#1a1a1a, #fdfdfd);
+background-color: #fdfdfd;
+background-color: light-dark(#fdfdfd, #1a1a1a);
+color-scheme: light dark;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+color-scheme: light only;
+}
+html, body, pre, code {
+background-color: transparent;
+}
+body, a, a:visited, blockquote {
+color: black;
+}
+pre, code {
+padding: 0;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a, a:visited {
+color: inherit;
+}
+img {
+max-width: 100%;
+}
+svg {
+height: auto;
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid;
+border-color: #e6e6e6;
+border-color: light-dark(#e6e6e6, #4c4c4c);
+color: #606060;
+color: light-dark(#606060, #b6b6b6);
+}
+code {
+white-space: pre-wrap;
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+border: none;
+border-top: 1px solid currentColor;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid currentColor;
+border-bottom: 1px solid currentColor;
+}
+th {
+border-top: 1px solid currentColor;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Independent Game Backend Architecture: Technical
+Handbook &amp; Implementation Guide</h1>
+</header>
+<h1 id="independent-game-backend-architecture-technical-handbook-implementation-guide">Independent
+Game Backend Architecture: Technical Handbook &amp; Implementation
+Guide</h1>
+<p><strong>Platform Engineering Architecture Series</strong><br />
+<strong>Audience:</strong> Technical Leadership, Game Developers &amp;
+Platform Integrators<br />
+<strong>Date:</strong> October 2026<br />
+<strong>Document Version:</strong> 2.0 (Client Edition)</p>
+<hr />
+<h2 id="executive-overview">Executive Overview</h2>
+<p>Modern multiplayer gaming platforms face a fundamental architectural
+challenge: how to host diverse, real-time games with distinct
+performance profiles, update cycles, and runtime dependencies without
+creating a fragile, resource-heavy monolith.</p>
+<p>This handbook details the architecture, design rationale, and
+technical implementation of <strong>Independent Per-Game Backend
+Separation</strong>. By transitioning from a unified monolithic server
+to dynamically orchestrated, game-specific dedicated backends, the
+platform achieves:</p>
+<ul>
+<li><strong>Isolated Failure Domains:</strong> A runtime exception in
+one game cannot impact or degrade any other game.</li>
+<li><strong>Minimal Cold-Start Latency:</strong> Server binary payloads
+are reduced by over 60%, speeding up container initialization to
+sub-second readiness.</li>
+<li><strong>Granular Resource Tuning:</strong> Turn-based board games
+and high-frequency real-time physics engines run under tailored CPU and
+memory constraints.</li>
+<li><strong>Zero-Downtime Extensibility:</strong> New games and version
+updates can be introduced independently via simple configuration entries
+without recompiling or restarting platform services.</li>
+</ul>
+<hr />
+<h2 id="the-rationale-why-separate-game-backends">1. The Rationale: Why
+Separate Game Backends?</h2>
+<h3 id="the-monolithic-bottleneck">1.1 The Monolithic Bottleneck</h3>
+<p>In early iterations of multiplayer infrastructures, dedicated server
+logic for multiple games is commonly bundled into a single master build
+or server container. While straightforward to set up initially, this
+pattern introduces severe operational bottlenecks as the game catalog
+grows.</p>
+<pre><code>[ Traditional Monolithic Pattern ]
+
+                   +--------------------------------------------+
+                   |           Monolithic Game Server           |
+  Match Request    |                                            |
+-----------------&gt; |  [Snake &amp; Ladder]  [Carrom]  [Pool]  ...  |
+                   |  (All game assets, scenes &amp; logic bundled) |
+                   +--------------------------------------------+
+                                         |
+                     * High RAM footprint per match
+                     * Slower startup (loads redundant assets)
+                     * Single bug threatens all game modes
+                     * Updating one game risks breaking all games</code></pre>
+<h3 id="core-limitations-of-the-monolithic-approach">1.2 Core
+Limitations of the Monolithic Approach</h3>
+<ol type="1">
+<li><strong>Bloated Binary Footprint:</strong><br />
+Every spawned match container was forced to load scenes, physics assets,
+audio definitions, and script assemblies for games entirely unrelated to
+the match being played.</li>
+<li><strong>Excessive Memory Overhead:</strong><br />
+The runtime virtual machine loaded class definitions and initialized
+static state across the entire game catalog, consuming hundreds of
+megabytes of unnecessary RAM per instance.</li>
+<li><strong>Noisy Neighbor &amp; Blast Radius Risk:</strong><br />
+If a memory leak or unexpected exception occurred in one game, the
+shared runtime could destabilize the entire container, potentially
+terminating concurrent sessions.</li>
+<li><strong>Coupled Deployment Cycles:</strong><br />
+Patching a minor visual bug or rule in a single game required
+rebuilding, testing, and redeploying the universal container image,
+introducing unnecessary risk to unaffected games.</li>
+<li><strong>Inflexible Resource Allocation:</strong><br />
+A lightweight turn-based title was forced to run with the same container
+resource ceiling as an intensive physics-driven game, leading to severe
+cloud resource waste.</li>
+</ol>
+<h3 id="the-target-independent-micro-backends">1.3 The Target:
+Independent Micro-Backends</h3>
+<p>The platform adopted an <strong>Independent Micro-Backend
+Architecture</strong>. Each game type possesses its own self-contained,
+dedicated headless server package that contains only the scenes,
+networking protocols, and game rules required for that specific
+title.</p>
+<pre><code>[ Independent Per-Game Architecture ]
+
+                           Match Initiation
+                                  |
+                                  v
+                      +-----------------------+
+                      | Backend Orchestration |
+                      |    (Image Resolver)   |
+                      +-----------------------+
+                        /         |         \
+                       /          |          \
+                      v           v           v
+               +------------+ +------------+ +------------+
+               | Game A     | | Game B     | | Game C     |
+               | Dedicated  | | Dedicated  | | Dedicated  |
+               | Container  | | Container  | | Container  |
+               | (Isolated) | | (Isolated) | | (Isolated) |
+               +------------+ +------------+ +------------+</code></pre>
+<h3 id="architecture-comparison-matrix">1.4 Architecture Comparison
+Matrix</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Architectural Metric</th>
+<th>Monolithic Server</th>
+<th>Independent Dedicated Backends</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Server Binary Size</strong></td>
+<td>600MB+ (bundled)</td>
+<td>150MB – 220MB (game-specific)</td>
+</tr>
+<tr>
+<td><strong>Container Warmup / Cold Start</strong></td>
+<td>4 – 8 seconds</td>
+<td>1 – 2 seconds</td>
+</tr>
+<tr>
+<td><strong>Idle Memory Footprint</strong></td>
+<td>~350MB – 450MB per match</td>
+<td>~140MB – 220MB per match</td>
+</tr>
+<tr>
+<td><strong>Fault Isolation</strong></td>
+<td>Shared vulnerability</td>
+<td>100% Isolated process sandbox</td>
+</tr>
+<tr>
+<td><strong>Release Independence</strong></td>
+<td>Global redeployment required</td>
+<td>Independent per-game releases</td>
+</tr>
+<tr>
+<td><strong>Resource Quotas</strong></td>
+<td>One-size-fits-all</td>
+<td>Configurable CPU &amp; RAM per title</td>
+</tr>
+<tr>
+<td><strong>Rollback Capability</strong></td>
+<td>High-risk global rollback</td>
+<td>Single-game pinpoint rollback</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="core-architecture-dispatch-pipeline">2. Core Architecture &amp;
+Dispatch Pipeline</h2>
+<h3 id="the-request-to-match-flow">2.1 The Request-to-Match Flow</h3>
+<p>The backend lifecycle follows a deterministic, decoupled sequence
+from player matchmaking through match conclusion:</p>
+<pre><code>[Player Client 1]     [Player Client 2]
+       \                     /
+        v                   v
+      +-----------------------+
+      |  Matchmaking Service  |  --&gt; Matches paired players into a room
+      +-----------------------+
+                  |
+                  | { matchId, gameType }
+                  v
+      +-----------------------+
+      |  Orchestrator Service |  --&gt; Resolves game image &amp; spawns container
+      +-----------------------+
+                  |
+                  v
+      +-----------------------+
+      |  Dedicated Container  |  --&gt; Spawns isolated game engine process
+      |  (Port &amp; Match Bound) |
+      +-----------------------+
+                  |
+                  v
+      +-----------------------+
+      |  WebSocket Router     |  --&gt; Manages player sessions &amp; traffic proxy
+      +-----------------------+</code></pre>
+<ol type="1">
+<li><strong>Matchmaking Pairing:</strong> The matchmaking service groups
+compatible players and creates a unique session with a distinct
+<code>matchId</code> and <code>gameType</code>.</li>
+<li><strong>Image Resolution:</strong> The orchestrator identifies the
+game type and dynamically queries the game registry.</li>
+<li><strong>Sandbox Spawning:</strong> An isolated container is spawned
+on demand, configured with unique match metadata, resource restrictions,
+and private network routing.</li>
+<li><strong>Readiness Verification:</strong> The orchestrator inspects
+startup signals to ensure the server listener has bound its internal
+port before exposing it to players.</li>
+<li><strong>Session Routing:</strong> Players connect over WebSockets to
+their assigned match path, and the proxy transparently routes frames to
+the isolated container.</li>
+<li><strong>Automated Teardown:</strong> Upon match completion and
+player exit, container resources are instantly reclaimed.</li>
+</ol>
+<hr />
+<h2 id="technical-implementation-code-patterns">3. Technical
+Implementation &amp; Code Patterns</h2>
+<h3 id="environment-driven-game-registry">3.1 Environment-Driven Game
+Registry</h3>
+<p>To allow new games to be added without modifying backend
+orchestration code, the system uses an environment-driven configuration
+matrix. Each game registers its container package tag through standard
+key-value configuration.</p>
+<pre class="env"><code># Default fallback container image
+GAME_SERVER_IMAGE=&#39;game-server-base:latest&#39;
+
+# Dedicated per-game images
+GAME_IMAGE_SNAKELADDER=&#39;game-server-snakeladder:v1.0&#39;
+GAME_IMAGE_CARROM=&#39;game-server-carrom:v1.0&#39;
+GAME_IMAGE_BUBBLESHOOTER=&#39;game-server-bubbleshooter:v1.0&#39;
+GAME_IMAGE_JELLYBLAST=&#39;game-server-jellyblast:v1.0&#39;
+GAME_IMAGE_POOL=&#39;game-server-pool:v1.0&#39;
+GAME_IMAGE_LUDO=&#39;game-server-ludo:v1.0&#39;
+GAME_IMAGE_POKER=&#39;game-server-poker:v1.0&#39;
+GAME_IMAGE_RUMMY=&#39;game-server-rummy:v1.0&#39;</code></pre>
+<h3 id="dynamic-resolution-fallback-logic">3.2 Dynamic Resolution &amp;
+Fallback Logic</h3>
+<p>When a match spawn request arrives, the orchestrator executes a
+multi-tiered lookup strategy. This guarantees that missing or mistyped
+game identifiers gracefully fall back to a safe baseline rather than
+dropping player sessions.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode typescript"><code class="sourceCode typescript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"> * Resolves the dedicated container image corresponding to a game type.</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"> * Employs a three-tiered resolution strategy:</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"> *   1. Exact key match</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"> *   2. Case-insensitive key match</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"> *   3. Default baseline fallback</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="fu">resolveGameImage</span>(gameType<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> <span class="dt">string</span> {</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> normalizedKey <span class="op">=</span> (gameType <span class="op">||</span> <span class="st">&#39;&#39;</span>)<span class="op">.</span><span class="fu">trim</span>()<span class="op">;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Tier 1: Direct exact match</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="kw">this</span><span class="op">.</span><span class="at">gameImages</span>[normalizedKey]<span class="op">?.</span><span class="fu">trim</span>()) {</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">this</span><span class="op">.</span><span class="at">gameImages</span>[normalizedKey]<span class="op">.</span><span class="fu">trim</span>()<span class="op">;</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Tier 2: Case-insensitive fallback</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> lowerKey <span class="op">=</span> normalizedKey<span class="op">.</span><span class="fu">toLowerCase</span>()<span class="op">;</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (<span class="kw">const</span> [key<span class="op">,</span> value] <span class="kw">of</span> <span class="bu">Object</span><span class="op">.</span><span class="fu">entries</span>(<span class="kw">this</span><span class="op">.</span><span class="at">gameImages</span>)) {</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (key<span class="op">.</span><span class="fu">toLowerCase</span>() <span class="op">===</span> lowerKey <span class="op">&amp;&amp;</span> value<span class="op">?.</span><span class="fu">trim</span>()) {</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> value<span class="op">.</span><span class="fu">trim</span>()<span class="op">;</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Tier 3: Global fallback image</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="kw">this</span><span class="op">.</span><span class="at">defaultContainerImage</span><span class="op">;</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="container-spawning-resource-sandboxing">3.3 Container Spawning
+&amp; Resource Sandboxing</h3>
+<p>Each match executes inside an isolated container sandbox with strict
+CPU and memory boundaries. Labels tag each container with its active
+match identifier for granular inspection and auditability.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode typescript"><code class="sourceCode typescript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"> * Spawns an isolated game container with dedicated resource constraints.</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="fu">spawnGameContainer</span>(matchId<span class="op">:</span> <span class="dt">string</span><span class="op">,</span> gameType<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">string</span><span class="op">&gt;</span> {</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> targetImage <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="fu">resolveGameImage</span>(gameType)<span class="op">;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> containerName <span class="op">=</span> <span class="vs">`match-</span><span class="sc">${</span>matchId<span class="sc">}</span><span class="vs">`</span><span class="op">;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> spawnArgs <span class="op">=</span> [</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;run&#39;</span><span class="op">,</span> <span class="st">&#39;-d&#39;</span><span class="op">,</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;--name&#39;</span><span class="op">,</span> containerName<span class="op">,</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;--memory&#39;</span><span class="op">,</span> <span class="kw">this</span><span class="op">.</span><span class="at">memoryLimit</span><span class="op">,</span>    <span class="co">// e.g., &#39;384m&#39;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;--cpus&#39;</span><span class="op">,</span> <span class="kw">this</span><span class="op">.</span><span class="at">cpuLimit</span><span class="op">,</span>        <span class="co">// e.g., &#39;0.75&#39;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;--network&#39;</span><span class="op">,</span> <span class="kw">this</span><span class="op">.</span><span class="at">internalNetwork</span><span class="op">,</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;--label&#39;</span><span class="op">,</span> <span class="vs">`platform.match_id=</span><span class="sc">${</span>matchId<span class="sc">}</span><span class="vs">`</span><span class="op">,</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;--label&#39;</span><span class="op">,</span> <span class="vs">`platform.game_type=</span><span class="sc">${</span>gameType<span class="sc">}</span><span class="vs">`</span><span class="op">,</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;-e&#39;</span><span class="op">,</span> <span class="vs">`MATCH_ID=</span><span class="sc">${</span>matchId<span class="sc">}</span><span class="vs">`</span><span class="op">,</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;-e&#39;</span><span class="op">,</span> <span class="vs">`GAME_TYPE=</span><span class="sc">${</span>gameType<span class="sc">}</span><span class="vs">`</span><span class="op">,</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    targetImage<span class="op">,</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  ]<span class="op">;</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> { stdout } <span class="op">=</span> <span class="cf">await</span> <span class="fu">execFileAsync</span>(<span class="st">&#39;docker&#39;</span><span class="op">,</span> spawnArgs)<span class="op">;</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> stdout<span class="op">.</span><span class="fu">trim</span>()<span class="op">;</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="non-intrusive-readiness-verification">3.4 Non-Intrusive
+Readiness Verification</h3>
+<p>In real-time multiplayer architectures, probing dedicated game server
+ports with conventional TCP handshakes can corrupt early connection
+state machines before players connect.</p>
+<p>To eliminate handshake corruption, the platform utilizes a
+<strong>passive, log-based readiness probe</strong> that inspects the
+container runtime output for initialization confirmation without
+transmitting uninvited packets into the game transport.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode typescript"><code class="sourceCode typescript"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"> * Verifies that the dedicated server process has successfully initialized</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"> * and started listening for client connections, without sending corrupting probe packets.</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="kw">async</span> <span class="fu">waitForServerReady</span>(</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  containerId<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  targetPort<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  timeoutMs <span class="op">=</span> <span class="dv">15000</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> startTime <span class="op">=</span> <span class="bu">Date</span><span class="op">.</span><span class="fu">now</span>()<span class="op">;</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">while</span> (<span class="bu">Date</span><span class="op">.</span><span class="fu">now</span>() <span class="op">-</span> startTime <span class="op">&lt;</span> timeoutMs) {</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> { stdout } <span class="op">=</span> <span class="cf">await</span> <span class="fu">execFileAsync</span>(<span class="st">&#39;docker&#39;</span><span class="op">,</span> [</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>      <span class="st">&#39;logs&#39;</span><span class="op">,</span> <span class="st">&#39;--tail&#39;</span><span class="op">,</span> <span class="st">&#39;30&#39;</span><span class="op">,</span> containerId<span class="op">,</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    ])<span class="op">;</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Check for standard server readiness signatures</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>      stdout<span class="op">.</span><span class="fu">includes</span>(<span class="vs">`listening on port </span><span class="sc">${</span>targetPort<span class="sc">}</span><span class="vs">`</span>) <span class="op">||</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>      stdout<span class="op">.</span><span class="fu">includes</span>(<span class="vs">`Transport [</span><span class="sc">${</span>targetPort<span class="sc">}</span><span class="vs">]`</span>) <span class="op">||</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>      stdout<span class="op">.</span><span class="fu">includes</span>(<span class="st">&#39;Dedicated Server Started&#39;</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    ) {</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>      <span class="co">// Allow transport listener thread to settle</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>      <span class="cf">await</span> <span class="kw">this</span><span class="op">.</span><span class="fu">delay</span>(<span class="dv">200</span>)<span class="op">;</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> <span class="kw">this</span><span class="op">.</span><span class="fu">delay</span>(<span class="dv">250</span>)<span class="op">;</span></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">Error</span>(<span class="vs">`Server container </span><span class="sc">${</span>containerId<span class="sc">}</span><span class="vs"> failed readiness within </span><span class="sc">${</span>timeoutMs<span class="sc">}</span><span class="vs">ms`</span>)<span class="op">;</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h3 id="connection-synchronization-staggering">3.5 Connection
+Synchronization &amp; Staggering</h3>
+<p>When consecutive matches occur, players frequently connect
+simultaneously with pre-warmed client caches. Simultaneous WebSocket
+upgrade requests arriving within milliseconds can cause transport thread
+contention.</p>
+<p>The platform introduces a <strong>per-match serialized handshake
+queue</strong> that spaces upstream connection handshakes by a
+micro-interval (120ms), ensuring reliable socket establishment.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode typescript"><code class="sourceCode typescript"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"> * Enqueues connection handshakes with a staggered delay</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"> * to prevent transport race conditions under rapid concurrent connections.</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span> <span class="fu">enqueueHandshake</span>(matchId<span class="op">:</span> <span class="dt">string</span><span class="op">,</span> clientRequest<span class="op">:</span> () <span class="kw">=&gt;</span> <span class="dt">void</span>)<span class="op">:</span> <span class="dt">void</span> {</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> currentQueue <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">handshakeQueues</span><span class="op">.</span><span class="fu">get</span>(matchId) <span class="op">??</span> <span class="bu">Promise</span><span class="op">.</span><span class="fu">resolve</span>()<span class="op">;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> nextQueue <span class="op">=</span> currentQueue</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">then</span>(() <span class="kw">=&gt;</span> <span class="kw">new</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span>(resolve <span class="kw">=&gt;</span> <span class="pp">setTimeout</span>(resolve<span class="op">,</span> <span class="dv">120</span>)))</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">then</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">clientRequest</span>()<span class="op">;</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">this</span><span class="op">.</span><span class="at">handshakeQueues</span><span class="op">.</span><span class="fu">set</span>(matchId<span class="op">,</span> nextQueue)<span class="op">;</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Auto-clean queue references when settled</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  nextQueue<span class="op">.</span><span class="fu">finally</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="kw">this</span><span class="op">.</span><span class="at">handshakeQueues</span><span class="op">.</span><span class="fu">get</span>(matchId) <span class="op">===</span> nextQueue) {</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>      <span class="kw">this</span><span class="op">.</span><span class="at">handshakeQueues</span><span class="op">.</span><span class="fu">delete</span>(matchId)<span class="op">;</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<hr />
+<h2 id="match-lifecycle-automated-resource-reclamation">4. Match
+Lifecycle &amp; Automated Resource Reclamation</h2>
+<p>Server resources are allocated strictly on demand and reclaimed
+aggressively when no longer in use, preventing resource leaks and zombie
+processes.</p>
+<pre><code>+-------------------------------------------------------------------+
+|                        Container Lifecycle                        |
++-------------------------------------------------------------------+
+
+   [1] Container Spawned
+             |
+             v
+   [2] Startup Grace Period (45s)
+             |
+             +-- (If no player joins within 45s) ----------&gt; [DESTROY]
+             |
+             v
+   [3] Active Match Session
+       (Players connected &amp; actively playing)
+             |
+             v
+   [4] Match Concluded -&gt; Scorecard Screen
+       (Players remain connected to review results)
+             |
+             +-- Both click Rematch -------------&gt; Continue Match
+             |
+             +-- Players exit to Lobby / Home ---&gt; Connections = 0
+             |                                          |
+             |                                          v
+             +-----------------------------------&gt; [DESTROY in 2s]</code></pre>
+<h3 id="lifecycle-rules-explained">Lifecycle Rules Explained</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>State</th>
+<th>Duration / Rule</th>
+<th>Architectural Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Startup Grace Window</strong></td>
+<td>45 Seconds</td>
+<td>Shields newly spawned containers from premature termination while
+clients download and unpack game assets.</td>
+</tr>
+<tr>
+<td><strong>Active Session</strong></td>
+<td>Duration of Match</td>
+<td>Container remains locked to active players; state synchronization
+occurs at full tick rate.</td>
+</tr>
+<tr>
+<td><strong>Scorecard Phase</strong></td>
+<td>Client review duration</td>
+<td>Keeps WebSocket connection alive so players can mutually trigger a
+Rematch without spinning up a new container.</td>
+</tr>
+<tr>
+<td><strong>Immediate Teardown</strong></td>
+<td>2 Seconds after 0 connections</td>
+<td>Instantly terminates and deletes the container when all players
+disconnect, freeing memory and CPU immediately.</td>
+</tr>
+<tr>
+<td><strong>Orphan Safety Net</strong></td>
+<td>45 Seconds idle</td>
+<td>Automatically destroys containers if matched players fail to
+establish a connection due to network drops.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="extensibility-guide-how-to-add-a-new-game">5. Extensibility
+Guide: How to Add a New Game</h2>
+<p>Adding a new game to the platform requires <strong>zero changes to
+the core orchestration codebase</strong>. Follow this three-step
+workflow to integrate a new game title:</p>
+<h3 id="step-1-package-the-headless-game-server-build">Step 1: Package
+the Headless Game Server Build</h3>
+<p>Compile the game in dedicated server mode (headless, no graphics, no
+audio). Package the resulting binary and runtime dependencies into a
+minimal container image:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example lightweight game server container</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> ubuntu:22.04</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install <span class="at">-y</span> ca-certificates <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">-rf</span> /var/lib/apt/lists/<span class="pp">*</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /app</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> ./Build/ ./</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="kw">ENV</span> PORT=7778</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="kw">EXPOSE</span> 7778</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="kw">CMD</span> [<span class="st">&quot;./ServerBinary.x86_64&quot;</span>, <span class="st">&quot;-batchmode&quot;</span>, <span class="st">&quot;-nographics&quot;</span>, <span class="st">&quot;-logFile&quot;</span>, <span class="st">&quot;-&quot;</span>]</span></code></pre></div>
+<h3 id="step-2-tag-and-register-the-container-image">Step 2: Tag and
+Register the Container Image</h3>
+<p>Tag the built image following the platform naming convention:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> game-server-mynewgame:v1.0 .</span></code></pre></div>
+<h3 id="step-3-register-the-game-in-platform-configuration">Step 3:
+Register the Game in Platform Configuration</h3>
+<p>Add the game mapping key to the orchestrator’s environment
+configuration:</p>
+<pre class="env"><code># Add the new game identifier mapping
+GAME_IMAGE_MYNEWGAME=&#39;game-server-mynewgame:v1.0&#39;</code></pre>
+<p>Upon saving the configuration, the orchestrator immediately resolves
+<code>MYNEWGAME</code> match requests to the new container. Existing
+games continue running without interruption.</p>
+<hr />
+<h2 id="supported-games-configuration-matrix">6. Supported Games
+Configuration Matrix</h2>
+<p>The following configuration demonstrates the platform’s standardized
+game mapping:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Game Title</th>
+<th>Environment Variable Key</th>
+<th>Container Image Identifier</th>
+<th>Gameplay Category</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Snake &amp; Ladder</strong></td>
+<td><code>GAME_IMAGE_SNAKELADDER</code></td>
+<td><code>game-server-snakeladder:v1.0</code></td>
+<td>Turn-Based Casual</td>
+</tr>
+<tr>
+<td><strong>Carrom</strong></td>
+<td><code>GAME_IMAGE_CARROM</code></td>
+<td><code>game-server-carrom:v1.0</code></td>
+<td>Real-Time Physics</td>
+</tr>
+<tr>
+<td><strong>Bubble Shooter</strong></td>
+<td><code>GAME_IMAGE_BUBBLESHOOTER</code></td>
+<td><code>game-server-bubbleshooter:v1.0</code></td>
+<td>Arcade Real-Time</td>
+</tr>
+<tr>
+<td><strong>Jelly Blast</strong></td>
+<td><code>GAME_IMAGE_JELLYBLAST</code></td>
+<td><code>game-server-jellyblast:v1.0</code></td>
+<td>Puzzle / Tile Match</td>
+</tr>
+<tr>
+<td><strong>Pool (8-Ball)</strong></td>
+<td><code>GAME_IMAGE_POOL</code></td>
+<td><code>game-server-pool:v1.0</code></td>
+<td>Continuous Physics</td>
+</tr>
+<tr>
+<td><strong>Ludo</strong></td>
+<td><code>GAME_IMAGE_LUDO</code></td>
+<td><code>game-server-ludo:v1.0</code></td>
+<td>Multi-Turn Strategy</td>
+</tr>
+<tr>
+<td><strong>Poker</strong></td>
+<td><code>GAME_IMAGE_POKER</code></td>
+<td><code>game-server-poker:v1.0</code></td>
+<td>State-Machine Card</td>
+</tr>
+<tr>
+<td><strong>Rummy</strong></td>
+<td><code>GAME_IMAGE_RUMMY</code></td>
+<td><code>game-server-rummy:v1.0</code></td>
+<td>State-Machine Card</td>
+</tr>
+<tr>
+<td><strong>Default Fallback</strong></td>
+<td><code>GAME_SERVER_IMAGE</code></td>
+<td><code>game-server-base:latest</code></td>
+<td>Generic Platform Image</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="key-architecture-decisions-summary">7. Key Architecture
+Decisions Summary</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Strategic Decision</th>
+<th>Technical Mechanism</th>
+<th>Primary Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Independent Container Packaging</strong></td>
+<td>Per-game isolated Docker images</td>
+<td>60%+ smaller images, rapid startup, zero blast radius across
+titles.</td>
+</tr>
+<tr>
+<td><strong>Config-Driven Registry</strong></td>
+<td>Environment variable mapping</td>
+<td>New games integrated with zero code deployment or downtime.</td>
+</tr>
+<tr>
+<td><strong>Three-Tier Fallback</strong></td>
+<td>Exact match -&gt; Case-insensitive -&gt; Default</td>
+<td>Prevents failed matches due to naming discrepancies or gradual
+rollouts.</td>
+</tr>
+<tr>
+<td><strong>Passive Readiness Detection</strong></td>
+<td>Log output inspection</td>
+<td>Eliminates transport protocol handshake corruption before player
+join.</td>
+</tr>
+<tr>
+<td><strong>Handshake Stagger Queue</strong></td>
+<td>120ms serialized window</td>
+<td>Prevents concurrent connection collisions on rapid match
+restarts.</td>
+</tr>
+<tr>
+<td><strong>Aggressive Deallocation</strong></td>
+<td>2-second post-exit cleanup</td>
+<td>Maximizes server density and eliminates zombie container resource
+drain.</td>
+</tr>
+<tr>
+<td><strong>Startup Grace Periods</strong></td>
+<td>45-second connection window</td>
+<td>Accommodates player network variance without premature container
+kills.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="appendix-glossary-of-technical-terms">Appendix: Glossary of
+Technical Terms</h2>
+<ul>
+<li><strong>Headless Server:</strong> A dedicated game engine build
+running in server mode without a window, display rendering pipeline, or
+audio hardware.</li>
+<li><strong>Orchestration Service:</strong> The platform service
+responsible for handling match lifecycle events, container spawning,
+port binding, and status monitoring.</li>
+<li><strong>WebSocket Router:</strong> An intelligent proxy layer that
+intercepts incoming player WebSocket connections and routes them
+dynamically to the appropriate container.</li>
+<li><strong>Container Sandbox:</strong> An isolated OS-level
+virtualization environment that enforces compute and memory boundaries
+on a running game process.</li>
+<li><strong>Match ID:</strong> A cryptographically unique UUID assigned
+to an individual match instance, used for routing, logging, and
+container lifecycle tracking.</li>
+<li><strong>Cold Start:</strong> The time required from the initial
+match trigger to when the containerized server is initialized, bound to
+its port, and ready for players.</li>
+</ul>
+<hr />
+<p><em>Document Reference: Technical Handbook — Independent Game Backend
+Architecture</em><br />
+<em>Classification: Client Architecture &amp; Integration Guide</em></p>
+</body>
+</html>

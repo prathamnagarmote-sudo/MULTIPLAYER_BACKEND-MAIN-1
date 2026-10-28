@@ -6,11 +6,16 @@ build/
 
 # Large binary builds (handled via Docker/Registry)
 Linux/
+*Headless/
+*_WebGL/
 *.x86_64
 *.unityweb
 *.so
+111*
+222*
 
 # Environment secrets
 .env
 *.pem
 .DS_Store
+
