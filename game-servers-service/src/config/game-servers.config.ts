@@ -37,6 +37,17 @@ export default registerAs('gameServers', () => ({
   ),
   internalPort: toNumber(process.env.GAME_SERVER_INTERNAL_PORT, 7778),
   gameImages: {
+    // Clean string mappings requested by platform integrators
+    'snakeladder': process.env.GAME_IMAGE_SNAKELADDER || '',
+    'snake': process.env.GAME_IMAGE_SNAKELADDER || '',
+    'bubbleshooter': process.env.GAME_IMAGE_BUBBLESHOOTER || '',
+    'carrom': process.env.GAME_IMAGE_CARROM || '',
+    'ludo': process.env.GAME_IMAGE_LUDO || '',
+    'rummy': process.env.GAME_IMAGE_RUMMY || '',
+    'pool': process.env.GAME_IMAGE_POOL || '',
+    'jellyblast': process.env.GAME_IMAGE_JELLYBLAST || '',
+    'poker': process.env.GAME_IMAGE_POKER || '',
+    // Legacy / Prefixed game mappings for backward compatibility
     'Game_1_SnakeLadder': process.env.GAME_IMAGE_SNAKELADDER || '',
     'Game_2_Carrom': process.env.GAME_IMAGE_CARROM || '',
     'Game_3_BubbleShooter': process.env.GAME_IMAGE_BUBBLESHOOTER || '',

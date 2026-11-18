@@ -115,9 +115,10 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
     matchId: string,
     gameType: string,
   ): Promise<SpawnGameServerResult> {
-    if (!this.containerImage.trim()) {
+    const targetImage = this.resolveGameImage(gameType);
+    if (!targetImage || !targetImage.trim()) {
       throw new ServiceUnavailableException(
-        'GAME_SERVER_IMAGE is not configured. Set it to the Unity headless server image before spawning matches.',
+        `No Docker image configured for gameType '${gameType}'.`,
       );
     }
 
@@ -149,6 +150,7 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
           `Resolved target Docker image '${targetImage}' for gameType '${gameType}' (match ${matchId})`,
         );
 
+        const hostIp = process.env.HOST_IP || '172.31.7.110';
         const { stdout } = await execFileAsync('docker', [
           'run',
           '-d',
@@ -162,6 +164,8 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
           this.cpuLimit,
           '--network',
           this.dockerNetwork,
+          '--add-host',
+          `replayhub.faecomtech.com:${hostIp}`,
           '--label',
           'stacknize.managed=true',
           '--label',
@@ -176,6 +180,10 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
           `GAME_TYPE=${gameType}`,
           '-e',
           `INTERNAL_HOOK_SECRET=${this.internalHookSecret}`,
+          '-e',
+          'SCORE_CALLBACK_URL=https://skillify-gaming-plattform.vercel.app/api/v1/tournaments/submitMultiplayerScore',
+          '-e',
+          'SETTLEMENT_WEBHOOK=https://skillify-gaming-plattform.vercel.app/api/v1/tournaments/submitMultiplayerScore',
           targetImage,
         ]);
 
@@ -581,23 +589,49 @@ export class GameServersService implements OnModuleInit, OnModuleDestroy {
   }
 
   private resolveGameImage(gameType: string): string {
-    const normalizedKey = (gameType || '').trim();
+    const rawKey = (gameType || '').trim();
+    if (!rawKey) {
+      if (this.containerImage && !this.containerImage.includes('disabled')) {
+        return this.containerImage;
+      }
+      throw new ServiceUnavailableException('No gameType provided and no default image configured');
+    }
 
     // 1. Direct match in configured gameImages map
-    if (this.gameImages[normalizedKey] && this.gameImages[normalizedKey].trim()) {
-      return this.gameImages[normalizedKey].trim();
+    if (this.gameImages[rawKey] && this.gameImages[rawKey].trim()) {
+      return this.gameImages[rawKey].trim();
     }
 
     // 2. Case-insensitive lookup in configured gameImages map
-    const lowerKey = normalizedKey.toLowerCase();
+    const lowerKey = rawKey.toLowerCase();
     for (const [key, value] of Object.entries(this.gameImages)) {
       if (key.toLowerCase() === lowerKey && value && value.trim()) {
         return value.trim();
       }
     }
 
-    // 3. Fallback to default monolithic container image
-    return this.containerImage;
+    // 3. Normalized alphanumeric lookup (strip 'game_', numbers, hyphens, underscores)
+    // e.g. "Game_1_SnakeLadder" or "snake_ladder" -> "snakeladder"
+    const stripToAlpha = (s: string) =>
+      s.toLowerCase().replace(/^game_?\d*_?/, '').replace(/[^a-z0-9]/g, '');
+
+    const strippedKey = stripToAlpha(rawKey);
+    if (strippedKey) {
+      for (const [key, value] of Object.entries(this.gameImages)) {
+        if (stripToAlpha(key) === strippedKey && value && value.trim()) {
+          return value.trim();
+        }
+      }
+    }
+
+    // 4. Fallback to default monolithic container image if configured and valid
+    if (this.containerImage && !this.containerImage.includes('disabled')) {
+      return this.containerImage;
+    }
+
+    throw new ServiceUnavailableException(
+      `Unsupported gameType '${gameType}'. Configured types are: ${Object.keys(this.gameImages).join(', ')}`,
+    );
   }
 
   private getErrorMessage(error: unknown): string {
