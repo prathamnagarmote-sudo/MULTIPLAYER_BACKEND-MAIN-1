@@ -14,6 +14,7 @@ export class ScoresController {
   private readonly logger = new Logger(ScoresController.name);
 
   private readonly skillifyWebhookUrl =
+    process.env.SKILLIFY_WEBHOOK_URL ||
     process.env.SKILLIFY_SETTLEMENT_WEBHOOK ||
     'https://skillify-gaming-plattform.vercel.app/api/v1/tournaments/submitMultiplayerScore';
 

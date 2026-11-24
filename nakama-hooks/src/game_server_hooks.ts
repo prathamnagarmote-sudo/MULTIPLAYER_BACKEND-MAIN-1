@@ -260,23 +260,54 @@ export function gameServerMatchSignal(
 
 export function matchmakerMatched(_ctx: any, logger: any, nk: any, matches: any[]): string {
   const gameType = parseGameType(matches);
-  const serverMatchId = nk.uuidv4();
+
+  // 1. Prefix with "skillify_" so ScoresController routes callbacks to Skillify Vercel
+  const serverMatchId = `skillify_${nk.uuidv4()}`;
   const matchPath = buildMatchPath(serverMatchId);
 
+  // 2. Extract player usernames / IDs from matched entries
+  const playerIds = matches
+    .map((m: any) => m.presence?.username || m.presence?.userId)
+    .filter(Boolean);
+
+  // Extract custom stake if available in ticket properties, defaulting to 20
+  const stake = (matches[0]?.properties?.stake || matches[0]?.numericProperties?.stake || 20);
+
+  // 3. Call Skillify Orchestrator to atomically debit both players and forward container spawn
+  const vercelSpawnUrl = "https://skillify-gaming-plattform.vercel.app/api/game-servers?action=spawn";
+  const internalSecret = getInternalSecret(_ctx) || "replayhub_nakama_hook_key";
+  const headers = {
+    "Content-Type": "application/json",
+    "X-Internal-Auth": internalSecret,
+  };
+
+  const payload = JSON.stringify({
+    match_id: serverMatchId,
+    game_id: gameType,
+    gameType: gameType,
+    player_ids: playerIds,
+    table_tier: 0,
+    stake: Number(stake) || 20,
+  });
+
   logger.info(
-    "matchmakerMatched triggered: gameType=%s matchPath=%s matches=%s",
-    gameType,
-    matchPath,
-    matches ? String(matches.length) : "0",
+    `[Nakama] Spawning server & debiting wallets via Skillify Vercel: matchId=${serverMatchId}, players=${JSON.stringify(playerIds)}`,
   );
 
-  const spawnResponse = spawnGameServer(nk, _ctx, serverMatchId, gameType);
-
-  if (!isSuccess(spawnResponse.code)) {
-    logger.error("matchmakerMatched spawn failed", spawnResponse);
-    throw new Error("Failed to spawn game server");
+  let response: any;
+  try {
+    response = nk.httpRequest(vercelSpawnUrl, "post", headers, payload, BACKEND_HTTP_TIMEOUT_MS);
+  } catch (err: any) {
+    logger.error(`[Nakama] Network error calling Skillify Vercel: ${err.message}`);
+    throw new Error("Failed to communicate with Skillify backend");
   }
 
+  if (response.code !== 200) {
+    logger.error(`[Nakama] Skillify Vercel rejected match spawn (code ${response.code}): ${response.body}`);
+    throw new Error(`Skillify debit rejected: ${response.body}`);
+  }
+
+  // 4. Create Nakama match handler and bind route as normal
   try {
     const matchId = nk.matchCreate(GAME_SERVER_MATCH_MODULE, {
       matchPath: matchPath,
