@@ -270,8 +270,10 @@ export function matchmakerMatched(_ctx: any, logger: any, nk: any, matches: any[
     .map((m: any) => m.presence?.username || m.presence?.userId)
     .filter(Boolean);
 
-  // Extract custom stake if available in ticket properties, defaulting to 20
-  const stake = (matches[0]?.properties?.stake || matches[0]?.numericProperties?.stake || 20);
+  // Extract custom stake/tier if available in ticket properties
+  const rawStake = matches[0]?.properties?.stake ?? matches[0]?.numericProperties?.stake ?? matches[0]?.properties?.fee ?? matches[0]?.numericProperties?.fee;
+  const customStake = rawStake !== undefined && rawStake !== null && !isNaN(Number(rawStake)) ? Number(rawStake) : undefined;
+  const tableTier = Number(matches[0]?.numericProperties?.tableTier ?? matches[0]?.numericProperties?.tier ?? matches[0]?.properties?.tier ?? 0) || 0;
 
   // 3. Call Skillify Orchestrator to atomically debit both players and forward container spawn
   const vercelSpawnUrl = "https://skillify-gaming-plattform.vercel.app/api/game-servers?action=spawn";
@@ -281,14 +283,17 @@ export function matchmakerMatched(_ctx: any, logger: any, nk: any, matches: any[
     "X-Internal-Auth": internalSecret,
   };
 
-  const payload = JSON.stringify({
+  const payloadData: Record<string, any> = {
     match_id: serverMatchId,
     game_id: gameType,
     gameType: gameType,
     player_ids: playerIds,
-    table_tier: 0,
-    stake: Number(stake) || 20,
-  });
+    table_tier: tableTier,
+  };
+  if (customStake !== undefined) {
+    payloadData.stake = customStake;
+  }
+  const payload = JSON.stringify(payloadData);
 
   logger.info(
     `[Nakama] Spawning server & debiting wallets via Skillify Vercel: matchId=${serverMatchId}, players=${JSON.stringify(playerIds)}`,
